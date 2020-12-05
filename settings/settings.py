@@ -19,3 +19,4 @@ RABBIT_SETTINGS = {
     "host": "rabbit",
 }
 LISTENING_QUEUE = "sample_queue"
+RESPONSE_URL = "http://192.168.43.100:8090/response_from_node"

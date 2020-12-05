@@ -26,10 +26,9 @@ class DataSource:
                 logger.info("RABBIT IS NOT UP YET, SLEEP 5 SECOND")
                 time.sleep(5)
 
-
         self.channel: pika.adapters.blocking_connection.BlockingChannel = self.connection.channel()
 
-        self.queue = Queue()
+        self.queue = Queue(maxsize=settings.WORKERS_NUMBER)
 
         self.channel.queue_declare(settings.LISTENING_QUEUE)
 
@@ -37,7 +36,7 @@ class DataSource:
 
     def start_listenning(self):
         logger.info(f"start listenning to queue {settings.LISTENING_QUEUE}")
-        self.channel.basic_consume(settings.LISTENING_QUEUE, auto_ack=True, on_message_callback=self.rabbit_callback)
+        self.channel.basic_consume(settings.LISTENING_QUEUE, auto_ack=False, on_message_callback=self.rabbit_callback)
         Thread(name="data_source_listenning_thread", target=self.channel.start_consuming).start()
 
     def stop_listenning(self):
@@ -56,8 +55,16 @@ class DataSource:
 
     def get_task(self, timeout=None) -> Union[Task, None]:
         message = self.get_message(timeout)
-        return Task(message) if message is not None else None
+        try:
+            return Task(message) if message is not None else None
+        except Task.TaskTypes.UnsupportedTaskType as e:
+            logger.info(f'{e.message}')
+            return None
 
-    def rabbit_callback(self, ch, method, properties, body: bytes):
+    def rabbit_callback(
+            self, ch: pika.adapters.blocking_connection.BlockingChannel,
+            method: pika.spec.Basic.Deliver, properties, body: bytes
+    ):
         logger.info("GOT REQUEST FROM RABBIT")
         self.queue.put(body.decode("utf-8"))
+        ch.basic_ack(delivery_tag=method.delivery_tag)

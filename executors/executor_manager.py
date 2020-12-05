@@ -1,12 +1,12 @@
 import logging
-import numexpr as ne
 
 from multiprocessing import Pool, Semaphore
 from typing import Callable, NoReturn
 
-import settings.settings as settings
+import settings
 
-from termcolor import colored
+from executors.executors.calculator import calculator
+from executors.executors.convolution import convolution
 
 
 from models.task import Task
@@ -20,8 +20,12 @@ class ExecutorManager:
         self.semaphore = Semaphore(settings.WORKERS_NUMBER)
 
     def get_task_executor(self, task: Task) -> Callable[[Task], NoReturn]:
-        return lambda x: logger.info(f'EXPRESSION {colored(x.request, "blue")} '
-                                     f'RESULT = {colored(ne.evaluate(x.request), "blue")}')
+        if task.type == task.TaskTypes.CALCULATOR:
+            return calculator
+        elif task.type == task.TaskTypes.CONVOLUTION:
+            return convolution
+
+        return lambda x: x
 
     def proceed_task(self, task):
         self.get_task_executor(task)(task)
