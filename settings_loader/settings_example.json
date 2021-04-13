@@ -1,0 +1,61 @@
+{
+    "common": {
+        "project_name": "gelios",
+        "rabbitmq": {
+            "master": {
+                "host": "127.0.0.1",
+                "port": "5672",
+                "user": "gelios",
+                "password": "25tb6tr21b",
+                "priority": 0
+            }
+        },
+        "logs": {
+            "version": 1,
+            "propagate": true,
+            "formatters": {
+                "default": {
+                    "format": "%(asctime)s.%(msecs)s PID:%(process)d %(levelname)s: %(message)s",
+                    "datefmt": "%m/%d/%Y %H:%M:%S"
+                }
+            },
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "DEBUG",
+                    "formatter": "default",
+                    "stream": "ext://sys.stdout"
+                },
+                "file": {
+                    "class": "Libs.logs.log_main.FolderCreatorFileCheckerRotatingFileHandler",
+                    "level": "INFO",
+                    "mode": "a",
+                    "maxBytes": 10485760,
+                    "backupCount": 5,
+                    "formatter": "default",
+                    "filename": "logs/common.log"
+                },
+                 "utils": {
+                    "class": "logging.FileHandler",
+                    "level": "DEBUG",
+                    "mode": "w",
+                    "formatter": "default",
+                    "filename": "utils.log"
+                }
+
+            },
+            "loggers": {
+                "utils": {
+                    "level": "ERROR",
+                    "propagate": 0,
+                    "handlers": ["utils"]
+                }
+
+            },
+            "root": {
+                "level": "DEBUG",
+                "handlers": ["console", "file"]
+            }
+        }
+    }
+}

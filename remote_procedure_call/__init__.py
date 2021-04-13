@@ -1,0 +1,4 @@
+from remote_procedure_call.rabbit_remote_procedure_call import RabbitRPCFunctionListener, RabbitRPCFunctionCaller
+
+ProjectStandardRPCFunctionListener = RabbitRPCFunctionListener
+ProjectStandardRPCFunctionCaller = RabbitRPCFunctionCaller
