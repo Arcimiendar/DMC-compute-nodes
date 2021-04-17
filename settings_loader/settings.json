@@ -1,0 +1,33 @@
+{
+    "rabbitmq": {
+        "host": "127.0.0.1",
+        "port": "5672",
+        "user": "user",
+        "password": "user"
+    },
+    "logs": {
+        "version": 1,
+        "propagate": true,
+        "formatters": {
+            "default": {
+                "format": "%(asctime)s.%(msecs)s PID:%(process)d %(levelname)s: %(message)s",
+                "datefmt": "%m/%d/%Y %H:%M:%S"
+            }
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": "DEBUG",
+                "formatter": "default",
+                "stream": "ext://sys.stdout"
+            }
+        },
+        "loggers": {
+
+        },
+        "root": {
+            "level": "DEBUG",
+            "handlers": ["console"]
+        }
+    }
+}

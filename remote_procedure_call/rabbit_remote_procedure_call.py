@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import time
 import uuid
-from rabbitmq import Rabbitmq
+from logs import get_logger
+from rabbitmq.rabbitmq import Rabbitmq
 from remote_procedure_call.base_remote_procedure_call import (
 	RPCFunctionListenerInterface, RPCFunctionCallerInterface
 )
@@ -15,14 +16,17 @@ RPC_EXCHANGE_NAME = 'rpc'
 RPC_REQUEST_ROUTING_KEY_PATTERN = 'rpc.request.'
 
 
+logger = get_logger(__name__)
+
+
 class RabbitRPCFunctionListener(RPCFunctionListenerInterface):
 	def __init__(self, *args, **kwargs):
 		super(RabbitRPCFunctionListener, self).__init__(*args, **kwargs)
 		if self.namespace:
 			self.name_of_function = '{}.{}'.format(self.namespace, self.name_of_function)
 		self.queue_name = RPC_REQUEST_ROUTING_KEY_PATTERN + self.name_of_function
-		self.request_rabbit = Rabbitmq(self.logs)
-		self.response_rabbit = Rabbitmq(self.logs)
+		self.request_rabbit = Rabbitmq()
+		self.response_rabbit = Rabbitmq()
 		self.consumer_tag = self.name_of_function + '.' + str(uuid.uuid4())
 		self._init_rabbit()
 		self.message_is_requested = False
@@ -34,7 +38,7 @@ class RabbitRPCFunctionListener(RPCFunctionListenerInterface):
 		self.request_rabbit.declare_rpc_function_queue(self.queue_name, self.queue_name, RPC_EXCHANGE_NAME)
 	
 	def _rabbit_consumer(self, channel, method, properties, body):
-		# type: (BlockingChannel, Basic.Deliver, BasicProperties, bytes) -> NoReturn
+		# type: (BlockingChannel, Basic.Deliver, BasicProperties, bytes) -> None
 		if not self.message_is_requested:  # protecting of processing multiple message per one time
 			channel.basic_nack(method.delivery_tag)
 			return
@@ -55,9 +59,9 @@ class RabbitRPCFunctionListener(RPCFunctionListenerInterface):
 		self.message_is_requested = True
 		flag = self.request_rabbit.process_one_message()
 		if not flag:
-			self.logs.trace('ERROR while process one message, try to reconnect to rabbit')
+			logger.info('ERROR while process one message, try to reconnect to rabbit')
 			while not self.request_rabbit.check_connect():
-				self.logs.trace('connect to rabbit failed. try again in 5 second')
+				logger.info('connect to rabbit failed. try again in 5 second')
 				time.sleep(5)
 			self._init_rabbit()
 		self.response_rabbit.stop_consuming(self.consumer_tag)
@@ -66,7 +70,7 @@ class RabbitRPCFunctionListener(RPCFunctionListenerInterface):
 		return gotten_data
 
 	def send_return(self, call_properties, return_data, content_type=None):
-		# type: (Dict[str, str], bytes, Optional[str]) -> NoReturn
+		# type: (Dict[str, str], bytes, Optional[str]) -> None
 		self.response_rabbit.send_msg(
 			RPC_EXCHANGE_NAME, call_properties.get('reply_to'),
 			return_data, custom_properties=BasicProperties(
@@ -86,7 +90,7 @@ class RabbitRPCFunctionCaller(RPCFunctionCallerInterface):
 			self.name_of_function = '{}.{}'.format(self.namespace, self.name_of_function)
 		self.response_bind_pattern = self.RPC_RESPONSE_BIND_PATTERN.format(self.name_of_function)
 
-		self.rabbit = Rabbitmq(self.logs)
+		self.rabbit = Rabbitmq()
 		self._init_rabbit()
 		self.gotten_message = None
 		self.id_of_call = None

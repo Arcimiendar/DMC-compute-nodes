@@ -9,4 +9,4 @@ class SettingsObject:
         return f's{{{", ".join(strings)}}}'
 
     def __repr__(self):
-        return f'<Settings object { self.__dict__ } >'
+        return f'<Settings object { str(self) } >'

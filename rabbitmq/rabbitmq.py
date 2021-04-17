@@ -1,16 +1,14 @@
 # class rabbitmq
-import sys
 import pika
-import settings
+from settings_loader.settings_loader import SettingsLoader
 from traceback import format_exc as tb
-import time
 from logs import get_logger
 
-from typing import Tuple, Iterable, Union
 from pika.adapters.blocking_connection import BlockingChannel
 
 
 logger = get_logger(__name__)
+settings = SettingsLoader.get_instance().rabbitmq
 
 
 class Rabbitmq:
@@ -21,25 +19,22 @@ class Rabbitmq:
 		self.channel = None
 
 	def connect(self):
-		if hasattr(settings, "rabbitmq"):
-			try:
-				logger.info("Try connect to the RabbitMq %s:%s" % (settings.rabbitmq["ip"], settings.rabbitmq["port"]))
-				credentials = pika.PlainCredentials(settings.rabbitmq["login"], settings.rabbitmq["pass"])
-				parameters = pika.ConnectionParameters(
-					host=settings.rabbitmq["ip"],
-					port=settings.rabbitmq["port"],
-					virtual_host='/',
-					credentials=credentials,
-					heartbeat=0
-				)
+		try:
+			logger.info("Try connect to the RabbitMq %s:%s" % (settings.host, settings.port))
+			credentials = pika.PlainCredentials(settings.user, settings.password)
+			parameters = pika.ConnectionParameters(
+				host=settings.host,
+				port=settings.port,
+				virtual_host='/',
+				credentials=credentials,
+				heartbeat=0
+			)
 
-				self.connection = pika.BlockingConnection(parameters)
-				self.channel = self.connection.channel()
-				logger.info("Success...")
-			except Exception as e:
-				logger.info("Connection Error to the rabbitmq %s" % e)
-		else:
-			logger.info("Error connection: unknown settings param 'rabbitmq'")
+			self.connection = pika.BlockingConnection(parameters)
+			self.channel = self.connection.channel()
+			logger.info("Success...")
+		except Exception as e:
+			logger.info("Connection Error to the rabbitmq %s" % e)
 
 	def check_connect(self, reconnect=True):
 		if (
@@ -58,7 +53,7 @@ class Rabbitmq:
 		if self.check_connect():
 			try:
 				self.channel.basic_publish(
-					exchange='%s' %  exchange,
+					exchange='%s' % exchange,
 					routing_key=routing_key if ignore_routing_key_project_autofill else
 					"%s" % routing_key,
 					body=message,
@@ -144,9 +139,9 @@ class Rabbitmq:
 			self.connection.close()
 		except Exception as e:
 			logger.info("Error disconnect to rabbitmq: %s" % e)
-		logger.info("Close connection to %s: %s" % (settings.rabbitmq["ip"], settings.rabbitmq["port"]))
+		logger.info("Close connection to %s: %s" % (settings.host, settings.port))
 
-	def process_one_message(self):
+	def process_one_message(self, timeout=None):
 		"""
 		process only one message
 		:return: is message proceed or not
@@ -154,7 +149,7 @@ class Rabbitmq:
 		process_flag = False
 		try:
 			self.channel.basic_qos(prefetch_count=1)
-			self.channel.connection.process_data_events(None)
+			self.channel.connection.process_data_events(timeout)
 			process_flag = True
 		except Exception as e:
 			logger.info("Error: Rabbitmq consumer can't process data event: %s" % e)
