@@ -1,5 +1,7 @@
 from message_putter.base_message_putter import BaseMessagePutter
-from remote_procedure_call.rabbit_remote_procedure_call import RabbitRPCFunctionCaller
+from remote_procedure_call.rabbit_remote_procedure_call import (
+    RabbitNoReturnRPCFunctionCaller, RabbitRPCFunctionCaller
+)
 from typing import TypeVar
 
 import json
@@ -12,7 +14,7 @@ class PingPutter(BaseMessagePutter):
     FUNCTION_NAME = 'ping'
     NAMESPACE = 'balancer'
     NEED_ACK = False
-    RPC_CALLER_CLASS = RabbitRPCFunctionCaller
+    RPC_CALLER_CLASS = RabbitNoReturnRPCFunctionCaller
 
     def incapsulate_task(self, task: NodeInfo) -> bytes:
         return json.dumps({'node_name': task.node_name, 'status': task.status}).encode()

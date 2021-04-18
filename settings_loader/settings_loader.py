@@ -85,11 +85,11 @@ class SettingsLoader(object, metaclass=SettingsLoaderMetaClass):
 	def reload_settings(self, source_file=None):
 		if source_file:
 			config_json = self.read_json_file(source_file)
-			default_settings = config_json['common']
+			default_settings = config_json
 			self._default_settings = default_settings or {}
 		else:
 			config_json = self.read_json_file(DEFAULT_CONFIG_FILE_PATH)
-			default_settings = config_json['common']
+			default_settings = config_json
 			self._default_settings = default_settings or {}
 
 	def get_attribute_value(self, settings_attribute_name, default_value=None):
@@ -105,7 +105,13 @@ class SettingsLoader(object, metaclass=SettingsLoaderMetaClass):
 			data = json.load(json_file)
 		return data
 
+	@property
+	def service_id(self):
+		return self._service_id
+
 	logs: Dict[str, Union[Dict[str, Union[Dict[str, Any], Any]], int]] = \
 		SettingsAttribute(default_value={}, map_function=None)
 
-	rabbitmq = SettingsAttribute(default_value=initialize_settings_object({}))
+	rabbitmq: Any = SettingsAttribute(default_value=initialize_settings_object({}))
+
+	error_policy: Any = SettingsAttribute(default_value=initialize_settings_object({"ignore_all": True}))

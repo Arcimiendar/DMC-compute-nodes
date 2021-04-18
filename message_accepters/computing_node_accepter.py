@@ -1,4 +1,6 @@
-from remote_procedure_call.rabbit_remote_procedure_call import RabbitRPCFunctionListener
+from remote_procedure_call.rabbit_remote_procedure_call import (
+    RabbitRPCFunctionListener, TemporaryRabbitRPCFunctionListener
+)
 from message_accepters.base_accepter import BaseAccepter
 
 import json
@@ -21,7 +23,7 @@ class StatisticTaskAccepter(BalancedTaskAccepter):
     FUNCTION_NAME = 'get_statistic'
     NAMESPACE = 'computing_node'
 
-    RPC_LISTENER_CLASS = RabbitRPCFunctionListener
+    RPC_LISTENER_CLASS = TemporaryRabbitRPCFunctionListener
 
     def __init__(self, node_name: str):
         self.FUNCTION_NAME += f'_node_{node_name}'

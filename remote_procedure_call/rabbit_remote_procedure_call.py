@@ -20,6 +20,9 @@ logger = get_logger(__name__)
 
 
 class RabbitRPCFunctionListener(RPCFunctionListenerInterface):
+	AUTO_DELETE_QUEUE = False
+	QUEUE_TTL = None
+
 	def __init__(self, *args, **kwargs):
 		super(RabbitRPCFunctionListener, self).__init__(*args, **kwargs)
 		if self.namespace:
@@ -35,7 +38,10 @@ class RabbitRPCFunctionListener(RPCFunctionListenerInterface):
 	def _init_rabbit(self):
 		self.request_rabbit.check_connect()
 		self.request_rabbit.declare_rpc_exchange(RPC_EXCHANGE_NAME)
-		self.request_rabbit.declare_rpc_function_queue(self.queue_name, self.queue_name, RPC_EXCHANGE_NAME)
+		self.request_rabbit.declare_rpc_function_queue(
+			self.queue_name, self.queue_name, RPC_EXCHANGE_NAME,
+			auto_delete=self.AUTO_DELETE_QUEUE, expires_at=self.QUEUE_TTL
+		)
 	
 	def _rabbit_consumer(self, channel, method, properties, body):
 		# type: (BlockingChannel, Basic.Deliver, BasicProperties, bytes) -> None
@@ -64,7 +70,8 @@ class RabbitRPCFunctionListener(RPCFunctionListenerInterface):
 				logger.info('connect to rabbit failed. try again in 5 second')
 				time.sleep(5)
 			self._init_rabbit()
-		self.response_rabbit.stop_consuming(self.consumer_tag)
+		self.request_rabbit.stop_consuming(self.consumer_tag)
+		self.request_rabbit.process_one_message()
 		gotten_data = self.gotten_data
 		self.gotten_data = None
 		return gotten_data
@@ -78,6 +85,11 @@ class RabbitRPCFunctionListener(RPCFunctionListenerInterface):
 				content_type=content_type,
 			), ignore_routing_key_project_autofill=True
 		)
+
+
+class TemporaryRabbitRPCFunctionListener(RabbitRPCFunctionListener):
+	AUTO_DELETE_QUEUE = True
+	QUEUE_TTL = 60
 
 
 class RabbitRPCFunctionCaller(RPCFunctionCallerInterface):
@@ -129,3 +141,32 @@ class RabbitRPCFunctionCaller(RPCFunctionCallerInterface):
 		self.rabbit.disconnect()
 		gotten_message, self.gotten_message = self.gotten_message, None  # clear variable and assign to new one
 		return gotten_message
+
+
+class RabbitNoReturnRPCFunctionCaller(RPCFunctionCallerInterface):
+
+	def __init__(self, *args, **kwargs):
+		super(RabbitNoReturnRPCFunctionCaller, self).__init__(*args, **kwargs)
+		if self.namespace:
+			self.name_of_function = '{}.{}'.format(self.namespace, self.name_of_function)
+
+		self.rabbit = Rabbitmq()
+		self._init_rabbit()
+
+	def _init_rabbit(self):
+		self.rabbit.declare_rpc_exchange(RPC_EXCHANGE_NAME)
+
+	def call(self, params, content_type=None):
+		# type: (bytes, Optional[str]) -> NoReturn
+		self.rabbit.check_connect()
+		self.rabbit.send_msg(
+			RPC_EXCHANGE_NAME, RPC_REQUEST_ROUTING_KEY_PATTERN + self.name_of_function, params,
+			custom_properties=BasicProperties(
+				reply_to=None,
+				correlation_id=None, content_type=content_type
+			)
+		)
+
+	def fetch_response(self):
+		# type: () -> bytes
+		raise NotImplemented

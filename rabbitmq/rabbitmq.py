@@ -95,7 +95,7 @@ class Rabbitmq:
 			self.channel.queue_delete(queue="%s" % queue)
 			logger.info("Delete queue %s " % queue)
 		except Exception:
-			logger.error("Error: Cant delete queue %s" % queue)
+			logger.error("Cant delete queue %s" % queue)
 
 	def binding_to_the_exchange(self, exchange, queue, routing_key):
 		try:
@@ -121,7 +121,7 @@ class Rabbitmq:
 			consumption_flag = True
 			logger.info("rabbitmq consumer worker %s start listen %s" % (consumer_tag, queue))
 		except Exception as e:
-			logger.info("Error: rabbitmq consumer workers %s cant start listen %s: %s" % (consumer_tag, queue, e))
+			logger.error("rabbitmq consumer workers %s cant start listen %s: %s" % (consumer_tag, queue, e))
 		return consumption_flag
 
 	def stop_consuming(self, consumer_tag):
@@ -131,7 +131,7 @@ class Rabbitmq:
 			consumption_flag = True
 			logger.info("Rabbitmq consumer worker %s stop listen queue" % consumer_tag)
 		except Exception as e:
-			logger.info("Error: Rabbitmq consumer worker %s cant stop: %s" % (consumer_tag, e))
+			logger.error("Rabbitmq consumer worker %s cant stop: %s" % (consumer_tag, e))
 		return consumption_flag
 
 	def disconnect(self):
@@ -152,7 +152,7 @@ class Rabbitmq:
 			self.channel.connection.process_data_events(timeout)
 			process_flag = True
 		except Exception as e:
-			logger.info("Error: Rabbitmq consumer can't process data event: %s" % e)
+			logger.error("Rabbitmq consumer can't process data event: %s" % e)
 
 		return process_flag
 
@@ -172,12 +172,17 @@ class Rabbitmq:
 			)
 			logger.info('DECLARED RPC EXCHANGE "{}"'.format(exchange_name))
 
-	def declare_rpc_function_queue(self, function_queue_name, function_routing_key, rpc_exchange_name):
+	def declare_rpc_function_queue(
+			self, function_queue_name, function_routing_key,
+			rpc_exchange_name, auto_delete=False, expires_at=None
+	):
 		"""
 		declares queue through which RPC will receive function call and to which routing key this queue will be bound
+		:param expires_at: set ttl of queue if there is not consumers
 		:param rpc_exchange_name: rpc exchange name (name of project will be added automatically)
 		:param function_queue_name: function name (name project will be added automatically)
 		:param function_routing_key: routing key to which to bind (name of project will be added auto)
+		:param auto_delete: auto delete queue after all consumers died
 		:return: NoReturn
 		"""
 		if self.check_connect():
@@ -185,7 +190,11 @@ class Rabbitmq:
 			rpc_exchange_name = '{}'.format(rpc_exchange_name)
 			function_queue_name = '{}'.format(function_queue_name)
 			function_routing_key = '{}'.format(function_routing_key)
-			self.channel.queue_declare(function_queue_name)
+			self.channel.queue_declare(
+				function_queue_name, auto_delete=auto_delete, arguments={
+					"x-expires": expires_at
+				} if expires_at else None
+			)
 			self.channel.queue_bind(
 				exchange=rpc_exchange_name,
 				queue=function_queue_name,

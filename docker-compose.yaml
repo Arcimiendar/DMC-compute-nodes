@@ -1,13 +1,20 @@
 version: "3.8"
 # use just for local development
 services:
-  node:
+  balancer:
     build: .
     links:
       - rabbit
     volumes:
     - ./:/project
-    command: "python3 main.py"
+    command: "python3 main_balancer.py"
+  computing:
+    build: .
+    links:
+      - rabbit
+    volumes:
+    - ./:/project
+    command: "python3 main_node.py"
   rabbit:
     image: "rabbitmq:3-management"
     ports:
