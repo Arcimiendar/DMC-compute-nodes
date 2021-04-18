@@ -106,7 +106,7 @@ class SettingsLoader(object, metaclass=SettingsLoaderMetaClass):
 		return data
 
 	@property
-	def service_id(self):
+	def service_id(self) -> str:
 		return self._service_id
 
 	logs: Dict[str, Union[Dict[str, Union[Dict[str, Any], Any]], int]] = \

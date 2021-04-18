@@ -4,7 +4,7 @@ from typing import NoReturn
 from settings_loader.settings_loader import SettingsLoader
 from message_putter.computing_node_putter import PingPutter
 from message_accepters.computing_node_accepter import StatisticTaskAccepter, BalancedTaskAccepter
-from contextlib import contextmanager
+from utils.error_context_handler_mixin import ErrorHandlerContextMixin
 import threading
 
 logger = get_logger(__name__)
@@ -17,15 +17,14 @@ class NodeInfo:
     node_name = settings.service_id
 
 
-class ComputingNode:
+class ComputingNode(ErrorHandlerContextMixin):
     def __init__(self):
-        self.stop_event = threading.Event()
+        super(ComputingNode, self).__init__()
         self.current_state = None
         self.ping = PingPutter()
         self.task_accepter = BalancedTaskAccepter()
         self.statistic_accepter = StatisticTaskAccepter(settings.service_id)
         self.node_info = NodeInfo(status='working')
-        self.error_number = 0
         main = threading.Thread(target=self.run_main_logic)
         pings = threading.Thread(target=self.run_pings)
         statistic = threading.Thread(target=self.run_statistic_logic)
@@ -37,16 +36,6 @@ class ComputingNode:
         main.join()
         pings.join()
         statistic.join()
-
-    @contextmanager
-    def error_handler_context(self):
-        try:
-            yield None
-        except Exception as e:
-            self.error_number += 1
-            logger.exception(e)
-            if not settings.error_policy.ignore_all and settings.error_policy.tolerance_number < self.error_number:
-                self.stop_event.set()
 
     def run_main_logic(self) -> NoReturn:
         while not self.stop_event.is_set():

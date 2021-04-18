@@ -1,6 +1,8 @@
 from message_accepters.base_accepter import BaseAccepter
 from remote_procedure_call.rabbit_http_remote_procedure_call import RabbitHttpFunctionListener
-from remote_procedure_call.rabbit_remote_procedure_call import RabbitRPCFunctionListener
+from remote_procedure_call.rabbit_remote_procedure_call import (
+    RabbitRPCFunctionListener, TemporaryRabbitRPCFunctionListener
+)
 
 import json
 
@@ -34,7 +36,7 @@ class PingAccepter(BaseAccepter):
     FUNCTION_NAME = 'ping'
     NAMESPACE = 'balancer'
 
-    RPC_LISTENER_CLASS = RabbitHttpFunctionListener
+    RPC_LISTENER_CLASS = TemporaryRabbitRPCFunctionListener
 
     def parse_task(self, task: bytes) -> object:
         return json.loads(task)

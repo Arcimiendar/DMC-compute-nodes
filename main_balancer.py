@@ -1,7 +1,8 @@
+from balancer_node.balancer_node import Balancer
 
 
 def main():
-    pass
+    Balancer()
 
 
 if __name__ == '__main__':

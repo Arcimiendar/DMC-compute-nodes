@@ -16,13 +16,14 @@ class BaseMessagePutter(metaclass=ABCMeta):
 
         self.caller = self.RPC_CALLER_CLASS(self.FUNCTION_NAME, self.NAMESPACE)
 
+    def return_response(self):
+        response = self.caller.fetch_response()
+        response = self.parse_reponse(response)
+        return response
+
     def put_task(self, task):
         raw_task = self.incapsulate_task(task)
         self.caller.call(raw_task)
-        if self.NEED_ACK:
-            response = self.caller.fetch_response()
-            response = self.parse_reponse(response)
-            return response
 
     @abstractmethod
     def incapsulate_task(self, task: object) -> bytes:
