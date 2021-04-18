@@ -10,7 +10,7 @@ class TimedDict(dict):
         super(TimedDict, self).__init__()
 
     def __getattribute__(self, item):
-        if item in ('ttls', 'ttl', 'dict', '__setitem__'):
+        if item in ('ttls', 'ttl', 'dict', '__setitem__', '__delitem__'):
             return super(TimedDict, self).__getattribute__(item)
 
         now = time.time()
