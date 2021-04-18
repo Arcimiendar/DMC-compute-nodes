@@ -23,5 +23,6 @@ class BaseDataBalancer(BaseAlgorithm, metaclass=ABCMeta):
         end_time = time.time()
         self.statistic['end_time'] = end_time
         self.statistic['spent_time'] = end_time - start_time
+        self.statistic['result'] = len(splitted_tasks)
 
         return splitted_tasks

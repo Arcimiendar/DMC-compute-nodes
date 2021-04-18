@@ -7,6 +7,7 @@ from message_accepters.balancer_node_accepter import (
     StatisticAccepter, TaskAccepter, PingAccepter, DoneTaskAccepter
 )
 from algorithm_getters.algorithm_getter import AlgorithmGetter
+from balancer_node.blocks.task_balancer import TaskBalancer
 from logs import get_logger
 from typing import NoReturn
 import threading
@@ -26,6 +27,7 @@ class Balancer(ErrorHandlerContextMixin):
         self.tasks = TaskAccepter()
         self.done_tasks = DoneTaskAccepter()
         self.algorithm_getter = AlgorithmGetter()
+        self.balanced_task_putter = BalancedTaskPutter()
 
         pings = threading.Thread(target=self.run_pings_logic)
         statistics = threading.Thread(target=self.run_statistics_logic)
@@ -78,4 +80,12 @@ class Balancer(ErrorHandlerContextMixin):
     def run_task_accept_logic(self) -> NoReturn:
         while not self.stop_event.is_set():
             with self.error_handler_context():
-                respond_address, task = self.tasks.get_task()
+                _, task = self.tasks.get_task()
+                task: dict
+                balancer = self.algorithm_getter.get_balancer(task["dataSet"]['dataSplitter']['fileName'])
+                _, result = TaskBalancer.balance_task(task, balancer)
+
+                for splitted_task in result:
+                    self.balanced_task_putter.put_task(splitted_task)
+
+                # self.tasks.respond_to_task(None, 'task_accepted')
