@@ -5,6 +5,11 @@ from settings_loader.settings_loader import SettingsLoader
 from message_putter.computing_node_putter import PingPutter, DoneTaskPutter
 from message_accepters.computing_node_accepter import StatisticTaskAccepter, BalancedTaskAccepter
 from utils.error_context_handler_mixin import ErrorHandlerContextMixin
+from algorithm_getters.algorithm_getter import AlgorithmGetter
+from computing_nodes.blocks.task_algorithm import TaskAlgorithm
+from computing_nodes.blocks.task_data_getter import TaskDataGetter
+from computing_nodes.blocks.task_data_saver import TaskDataSaver
+
 import threading
 
 logger = get_logger(__name__)
@@ -26,6 +31,7 @@ class ComputingNode(ErrorHandlerContextMixin):
         self.task_accepter = BalancedTaskAccepter()
         self.statistic_accepter = StatisticTaskAccepter(settings.service_id)
         self.node_info = NodeInfo(status='working')
+        self.algorithm_getter = AlgorithmGetter()
         main = threading.Thread(target=self.run_main_logic)
         pings = threading.Thread(target=self.run_pings)
         statistic = threading.Thread(target=self.run_statistic_logic)
@@ -42,9 +48,19 @@ class ComputingNode(ErrorHandlerContextMixin):
         while not self.stop_event.is_set():
             with self.error_handler_context():
                 _, task = self.task_accepter.get_task()
+                task: dict
                 logger.info(f'got task: {task}')
-                ###
 
+                data_getter = self.algorithm_getter.get_getter(task['dataSet']['dataGetter']['fileName'])
+                algorithm = [
+                    self.algorithm_getter.get_algorithm(step['fileName'])
+                    for step in task['algorithm']['tasks']
+                ]
+                data_saver = self.algorithm_getter.get_saver(task['dataSet']['dataSaver']['fileName'])
+                ###
+                context, task = TaskDataGetter.get_data(task, data_getter)
+                context, task = TaskAlgorithm.execute(context, task, algorithm)
+                context, task = TaskDataSaver.save_data(context, task, data_saver)
                 ###
                 self.done_task.put_task(task)
                 self.done_task.return_response()
