@@ -11,6 +11,8 @@ from balancer_node.blocks.task_balancer import TaskBalancer
 from logs import get_logger
 from typing import NoReturn
 import threading
+import uuid
+import time
 
 
 logger = get_logger(__name__)
@@ -20,7 +22,7 @@ class Balancer(ErrorHandlerContextMixin):
     def __init__(self):
         super(Balancer, self).__init__()
         self.available_nodes = TimedDict(120)
-        self.tasks = {}
+        self.pending_tasks = {}  # redo through redis
 
         self.pings = PingAccepter()
         self.statistic = StatisticAccepter()
@@ -32,14 +34,17 @@ class Balancer(ErrorHandlerContextMixin):
         pings = threading.Thread(target=self.run_pings_logic)
         statistics = threading.Thread(target=self.run_statistics_logic)
         tasks = threading.Thread(target=self.run_task_accept_logic)
+        done_tasks = threading.Thread(target=self.run_done_task_accept_logic)
 
         pings.start()
         statistics.start()
         tasks.start()
+        done_tasks.start()
 
         pings.join()
         statistics.join()
         tasks.join()
+        done_tasks.join()
 
     def run_pings_logic(self) -> NoReturn:
         while not self.stop_event.is_set():
@@ -82,10 +87,33 @@ class Balancer(ErrorHandlerContextMixin):
             with self.error_handler_context():
                 _, task = self.tasks.get_task()
                 task: dict
+                task['taskId'] = str(uuid.uuid4())  # temp, remove when Egor finish it
+                self.pending_tasks[task['taskId']] = task
                 balancer = self.algorithm_getter.get_balancer(task["dataSet"]['dataSplitter']['fileName'])
                 _, result = TaskBalancer.balance_task(task, balancer)
+                task['number_of_tasks'] = len(result)
+                task['time_start'] = time.time()
 
                 for splitted_task in result:
                     self.balanced_task_putter.put_task(splitted_task)
 
                 # self.tasks.respond_to_task(None, 'task_accepted')
+
+    def run_done_task_accept_logic(self):
+        while not self.stop_event.is_set():
+            with self.error_handler_context():
+                call_info, done_task = self.done_tasks.get_task()
+                done_task: dict
+                if done_task['taskId'] in self.pending_tasks:
+                    self.pending_tasks[done_task['taskId']]['number_of_tasks'] -= 1
+                    self.done_tasks.respond_to_task(call_info, {'status': 'ok'})
+
+                    if self.pending_tasks[done_task['taskId']]['number_of_tasks'] == 0:
+                        result = {
+                            'taskId': done_task['taskId'],
+                            'status': 'ok',
+                            'timeSpent': str(time.time() - self.pending_tasks[done_task['taskId']]['time_start']),
+                            'message': 'ok'
+                        }
+                        logger.info(f'result = {result}')
+                    # self.tasks.respond_to_task(None, result)

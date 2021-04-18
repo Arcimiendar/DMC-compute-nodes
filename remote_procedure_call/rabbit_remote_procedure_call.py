@@ -88,8 +88,7 @@ class RabbitRPCFunctionListener(RPCFunctionListenerInterface):
 
 
 class TemporaryRabbitRPCFunctionListener(RabbitRPCFunctionListener):
-	AUTO_DELETE_QUEUE = True
-	QUEUE_TTL = 60
+	QUEUE_TTL = 60 * 1000
 
 
 class RabbitRPCFunctionCaller(RPCFunctionCallerInterface):

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from logs import get_logger
 from typing import NoReturn
 from settings_loader.settings_loader import SettingsLoader
-from message_putter.computing_node_putter import PingPutter
+from message_putter.computing_node_putter import PingPutter, DoneTaskPutter
 from message_accepters.computing_node_accepter import StatisticTaskAccepter, BalancedTaskAccepter
 from utils.error_context_handler_mixin import ErrorHandlerContextMixin
 import threading
@@ -22,6 +22,7 @@ class ComputingNode(ErrorHandlerContextMixin):
         super(ComputingNode, self).__init__()
         self.current_state = None
         self.ping = PingPutter()
+        self.done_task = DoneTaskPutter()
         self.task_accepter = BalancedTaskAccepter()
         self.statistic_accepter = StatisticTaskAccepter(settings.service_id)
         self.node_info = NodeInfo(status='working')
@@ -40,8 +41,13 @@ class ComputingNode(ErrorHandlerContextMixin):
     def run_main_logic(self) -> NoReturn:
         while not self.stop_event.is_set():
             with self.error_handler_context():
-                task = self.task_accepter.get_task()
+                _, task = self.task_accepter.get_task()
                 logger.info(f'got task: {task}')
+                ###
+
+                ###
+                self.done_task.put_task(task)
+                self.done_task.return_response()
 
     def run_statistic_logic(self) -> NoReturn:
         while not self.stop_event.is_set():

@@ -30,10 +30,7 @@ class DoneTaskPutter(BaseMessagePutter):
     RPC_CALLER_CLASS = RabbitRPCFunctionCaller
 
     def incapsulate_task(self, task: TaskInfo) -> bytes:
-        return json.dumps({
-            'status': task.status, 'time_spent': task.time_spent,
-            'message': task.message, 'user_id': task.user_id
-        })
+        return json.dumps(task)
 
     def parse_reponse(self, response: bytes):
         return json.loads(response)
