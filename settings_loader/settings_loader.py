@@ -82,15 +82,11 @@ class SettingsLoader(object, metaclass=SettingsLoaderMetaClass):
 			cls.__instance = SettingsLoader()
 		return cls.__instance
 
-	def reload_settings(self, source_file=None):
-		if source_file:
-			config_json = self.read_json_file(source_file)
-			default_settings = config_json
-			self._default_settings = default_settings or {}
-		else:
-			config_json = self.read_json_file(DEFAULT_CONFIG_FILE_PATH)
-			default_settings = config_json
-			self._default_settings = default_settings or {}
+	def reload_settings(self):
+		source_file = os.environ.get('SETTINGS', DEFAULT_CONFIG_FILE_PATH)
+		config_json = self.read_json_file(source_file)
+		default_settings = config_json
+		self._default_settings = default_settings or {}
 
 	def get_attribute_value(self, settings_attribute_name, default_value=None):
 		value = None

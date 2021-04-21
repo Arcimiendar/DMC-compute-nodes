@@ -1,0 +1,38 @@
+{
+    "rabbitmq": {
+        "host": "rabbit",
+        "port": "5672",
+        "user": "guest",
+        "password": "guest"
+    },
+    "error_policy": {
+        "ignore_all": false,
+        "tolerance_number": 1
+    },
+    "algorithm_storage_backend": {
+        "type": "temporary_storage",
+        "config": {
+
+        }
+    },
+    "logs": {
+        "version": 1,
+        "propagate": false,
+        "formatters": {
+            "default": {
+                "format": "%(asctime)s.%(msecs)05d %(levelname)s: %(message)s",
+                "datefmt": "%m/%d/%Y %H:%M:%S"
+            }
+        },
+        "handlers": {
+
+        },
+        "loggers": {
+
+        },
+        "root": {
+            "level": "DEBUG",
+            "handlers": []
+        }
+    }
+}
