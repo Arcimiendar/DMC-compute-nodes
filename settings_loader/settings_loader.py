@@ -116,4 +116,6 @@ class SettingsLoader(object, metaclass=SettingsLoaderMetaClass):
 
 	error_policy: Any = SettingsAttribute(default_value=initialize_settings_object({"ignore_all": True}))
 
-	algorithm_storage_backend: Any = SettingsAttribute()
+	algorithm_storage_backend: Any = SettingsAttribute(
+		default_value=initialize_settings_object({"type": "temporary_storage", "config": {}})
+	)
