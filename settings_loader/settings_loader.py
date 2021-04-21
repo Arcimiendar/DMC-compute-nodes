@@ -115,3 +115,5 @@ class SettingsLoader(object, metaclass=SettingsLoaderMetaClass):
 	rabbitmq: Any = SettingsAttribute(default_value=initialize_settings_object({}))
 
 	error_policy: Any = SettingsAttribute(default_value=initialize_settings_object({"ignore_all": True}))
+
+	algorithm_storage_backend: Any = SettingsAttribute()

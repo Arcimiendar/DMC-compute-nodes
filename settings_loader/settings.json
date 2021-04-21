@@ -9,6 +9,12 @@
         "ignore_all": false,
         "tolerance_number": 1
     },
+    "algorithm_storage_backend": {
+        "type": "temporary_storage",
+        "config": {
+
+        }
+    },
     "logs": {
         "version": 1,
         "propagate": true,

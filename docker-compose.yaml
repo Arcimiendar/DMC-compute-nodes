@@ -14,7 +14,7 @@ services:
       - rabbit
     volumes:
     - ./:/project
-    command: "python3 main_node.py"
+    command: "python3 main_computing.py"
   rabbit:
     image: "rabbitmq:3-management"
     ports:
