@@ -30,11 +30,6 @@ class AlgorithmGetter:
         return algorithm_class
 
     def get_balancer(self, balancer_name: str) -> Type[BaseDataBalancer]:
-        # class TempDataBalancer(BaseDataBalancer):
-        #     def execute(self, ctx: Context, data: str) -> object:
-        #         return data.split('/')
-        #
-        # return TempDataBalancer
         algorithm_module = self.storage.get_module(balancer_name)
         algorithm_class = getattr(algorithm_module, algorithm_module.class_name)
         assert algorithm_class != BaseDataBalancer, 'invalid algorithm'

@@ -1,11 +1,11 @@
 from models.base_algorithm import Context
 from models.base_data_balancer import BaseDataBalancer
-from typing import List, Type
+from typing import Dict, Type, Tuple, Any, List
 
 
 class TaskBalancer:
     @classmethod
-    def balance_task(cls, task: dict, handler: Type[BaseDataBalancer]) -> List[dict]:
+    def balance_task(cls, task: dict, handler: Type[BaseDataBalancer]) -> Tuple[Context, List[Dict[str, Any]]]:
         context = Context(task)
         handler_instance = handler()
         tasks = handler_instance.balance_task(context, task['dataSet']['link'])
