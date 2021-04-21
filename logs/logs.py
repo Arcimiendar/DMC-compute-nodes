@@ -13,8 +13,6 @@ import logging.handlers
 # current package modules
 from settings_loader import SettingsLoader
 
-log_path = os.getcwd()
-class_name = "Logs"
 get_logger_name_func = "get_logger"
 
 previous_settings = {}
