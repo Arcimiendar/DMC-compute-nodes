@@ -15,7 +15,7 @@ class BalancedTaskPutter(BaseMessagePutter):
     def incapsulate_task(self, task: object) -> bytes:
         return json.dumps(task)
 
-    def parse_reponse(self, response: bytes):
+    def parse_response(self, response: bytes):
         raise NotImplemented
 
 
@@ -32,5 +32,5 @@ class StatisticTaskPutter(BaseMessagePutter):
     def incapsulate_task(self, task: object) -> bytes:
         return json.dumps(task)
 
-    def parse_reponse(self, response: bytes):
+    def parse_response(self, response: bytes):
         return json.loads(response)

@@ -19,7 +19,7 @@ class PingPutter(BaseMessagePutter):
     def incapsulate_task(self, task: NodeInfo) -> bytes:
         return json.dumps({'node_name': task.node_name, 'status': task.status}).encode()
 
-    def parse_reponse(self, response: bytes):
+    def parse_response(self, response: bytes):
         pass
 
 
@@ -32,5 +32,5 @@ class DoneTaskPutter(BaseMessagePutter):
     def incapsulate_task(self, task: TaskInfo) -> bytes:
         return json.dumps(task)
 
-    def parse_reponse(self, response: bytes):
+    def parse_response(self, response: bytes):
         return json.loads(response)

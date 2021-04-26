@@ -30,5 +30,5 @@ class BaseMessagePutter(metaclass=ABCMeta):
         raise NotImplemented
 
     @abstractmethod
-    def parse_reponse(self, response: bytes):
+    def parse_response(self, response: bytes):
         raise NotImplemented

@@ -16,7 +16,7 @@ class BalancedTaskAccepter(BaseAccepter):
         return json.loads(task)
 
     def incapsulate_response(self, response: object) -> bytes:
-        return json.dumps(response)
+        return json.dumps(response).encode()
 
 
 class StatisticTaskAccepter(BalancedTaskAccepter):
