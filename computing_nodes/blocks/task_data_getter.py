@@ -9,4 +9,5 @@ class TaskDataGetter:
         context = Context(task)
         handler_instance = handler()
         task['current_result'] = handler_instance.get_data(context, task['current_result'])
+        task['statistic']['getter'] = handler_instance.statistic
         return context, task

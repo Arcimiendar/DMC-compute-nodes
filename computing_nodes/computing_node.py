@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from logs import get_logger
-from typing import NoReturn
+from typing import NoReturn, Union
 from settings_loader.settings_loader import SettingsLoader
 from message_putter.computing_node_putter import PingPutter, DoneTaskPutter
 from message_accepters.computing_node_accepter import StatisticTaskAccepter, BalancedTaskAccepter
@@ -32,6 +32,7 @@ class ComputingNode(ErrorHandlerContextMixin):
         self.statistic_accepter = StatisticTaskAccepter(settings.service_id)
         self.node_info = NodeInfo(status='working')
         self.algorithm_getter = AlgorithmGetter()
+        self.task: Union[dict, None] = None
         main = threading.Thread(target=self.run_main_logic)
         pings = threading.Thread(target=self.run_pings)
         statistic = threading.Thread(target=self.run_statistic_logic)
@@ -44,25 +45,34 @@ class ComputingNode(ErrorHandlerContextMixin):
         pings.join()
         statistic.join()
 
+    def preprocess_task(self, task):
+        task['statistic'] = {}
+        task['statistic']['getter'] = None
+        task['statistic']['saver'] = None
+        task['statistic']['algorithms'] = {}
+        return task
+
     def run_main_logic(self) -> NoReturn:
         while not self.stop_event.is_set():
             with self.error_handler_context():
-                _, task = self.task_accepter.get_task()
-                task: dict
-                logger.info(f'got task: {task}')
+                _, self.task = self.task_accepter.get_task()
+                self.task: dict
+                self.task = self.preprocess_task(self.task)
+                logger.info(f'got task: {self.task}')
 
-                data_getter = self.algorithm_getter.get_getter(task['dataSet']['dataGetter']['fileName'])
+                data_getter = self.algorithm_getter.get_getter(self.task['dataSet']['dataGetter']['fileName'])
                 algorithm = [
                     self.algorithm_getter.get_algorithm(step['fileName'])
-                    for step in task['algorithm']['tasks']
+                    for step in self.task['algorithm']['tasks']
                 ]
-                data_saver = self.algorithm_getter.get_saver(task['dataSet']['dataSaver']['fileName'])
+
+                data_saver = self.algorithm_getter.get_saver(self.task['dataSet']['dataSaver']['fileName'])
                 ###
-                context, task = TaskDataGetter.get_data(task, data_getter)
-                context, task = TaskAlgorithm.execute(context, task, algorithm)
-                context, task = TaskDataSaver.save_data(context, task, data_saver)
+                context, self.task = TaskDataGetter.get_data(self.task, data_getter)
+                context, self.task = TaskAlgorithm.execute(context, self.task, algorithm)
+                context, self.task = TaskDataSaver.save_data(context, self.task, data_saver)
                 ###
-                self.done_task.put_task(task)
+                self.done_task.put_task(self.task)
                 self.done_task.return_response()
 
     def run_statistic_logic(self) -> NoReturn:

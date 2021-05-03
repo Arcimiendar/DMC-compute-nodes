@@ -9,4 +9,5 @@ class TaskDataSaver:
         handler_instance = handler()
         handler_instance.save_data(context, task['current_result'])
         task.pop('current_result')
+        task['statistic']['saver'] = handler_instance.statistic
         return context, task

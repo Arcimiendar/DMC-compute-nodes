@@ -11,10 +11,8 @@ class TestRabbitRPCFunction(unittest.TestCase):
             name_of_function='test_function',
             namespace='test_namespace'
         )
-        self.caller = RabbitRPCFunctionCaller(
-            name_of_function='test_function',
-            namespace='test_namespace'
-        )
+        self.rpc_function_caller = RabbitRPCFunctionCaller(name_of_function='test_function', namespace='test_namespace')
+        self.caller = self.rpc_function_caller
 
     def test_one_time_conversation(self):
         test_params = b'test_params'
