@@ -12,7 +12,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 
 
-RPC_EXCHANGE_NAME = 'rpc'
+RPC_EXCHANGE_NAME = 'exchange'
 RPC_REQUEST_ROUTING_KEY_PATTERN = 'rpc.request.'
 
 

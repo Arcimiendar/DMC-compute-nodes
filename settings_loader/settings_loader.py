@@ -115,3 +115,5 @@ class SettingsLoader(object, metaclass=SettingsLoaderMetaClass):
 	algorithm_storage_backend: Any = SettingsAttribute(
 		default_value=initialize_settings_object({"type": "temporary_storage", "config": {}})
 	)
+
+	web_server: Any = SettingsAttribute(default_value=initialize_settings_object({'url': None}))

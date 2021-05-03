@@ -116,4 +116,5 @@ class Balancer(ErrorHandlerContextMixin):
                             'message': 'ok'
                         }
                         logger.info(f'result = {result}')
-                    # self.tasks.respond_to_task(None, result)
+
+                        self.tasks.respond_to_task(None, result)
