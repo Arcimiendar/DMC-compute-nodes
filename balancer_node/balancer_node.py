@@ -158,5 +158,6 @@ class Balancer(ErrorHandlerContextMixin):
                             'message': 'ok'
                         }
                         logger.info(f'result = {result}')
+                        self.pending_tasks.pop(done_task['taskId'])
 
                         self.tasks.respond_to_task(None, result)
