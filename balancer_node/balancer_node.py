@@ -1,3 +1,5 @@
+import json
+
 from utils.timed_dict import TimedDict
 from utils.error_context_handler_mixin import ErrorHandlerContextMixin
 from message_putter.balancer_node_putter import (
@@ -56,31 +58,71 @@ class Balancer(ErrorHandlerContextMixin):
                 if ping['status'] == 'quit':
                     self.available_nodes.pop(ping['node_name'])
 
+    def handle_system_statistics(self, statistics_request):
+        result = {"key": ""}
+        if statistics_request['key'] == "done_percent":
+            task_id = statistics_request['taskId']
+            pending_task = self.pending_tasks.get(task_id, {'total_number_of_tasks': 0, 'number_of_tasks': 0})
+            total_number_of_tasks = pending_task["total_number_of_tasks"]
+            number_of_tasks = pending_task["number_of_tasks"]
+            result['key'] = json.dumps({
+                "total_number_of_tasks": total_number_of_tasks,
+                "number_of_tasks": number_of_tasks,
+                "percent": 100 if number_of_tasks == 0 or total_number_of_tasks == 0
+                else (total_number_of_tasks - number_of_tasks) / total_number_of_tasks
+            })
+
+        elif statistics_request['key'] == 'available_nodes':
+            nodes = []
+            for node in self.available_nodes.values():
+                nodes.append(node['name'])
+            result['key'] = json.dumps({'available_nodes': nodes})
+        return result
+
+    def handle_user_statistics(self, statistics_request):
+        promises = []
+        node_statistic = []
+
+        for node in self.available_nodes.values():
+            promises.append(StatisticTaskPutter(node['node_name']))
+
+        for promise in promises:
+            promise.put_task(statistics_request)
+
+        for promise in promises:
+            node_statistic.append(promise.return_response())
+
+        merged_statistic = self.merge_statistic(node_statistic)
+
+        return merged_statistic
+
     def run_statistics_logic(self) -> NoReturn:
         while not self.stop_event.is_set():
-            promises = []
-            node_statistic = []
             with self.error_handler_context():
                 return_address, statistics_request = self.statistic.get_task()
+                statistics_request = {
+                    "key": "done_percent",
+                    "taskId": "",  # task id
+                    "system": True
+                }
                 logger.info(f'got statistic request {statistics_request}')
-                for node in self.available_nodes.values():
-                    promises.append(StatisticTaskPutter(node['node_name']))
+                if statistics_request['system']:
+                    result = self.handle_system_statistics(statistics_request)
+                else:
+                    result = self.handle_user_statistics(statistics_request)
 
-                for promise in promises:
-                    promise.put_task(statistics_request)
-
-                for promise in promises:
-                    node_statistic.append(promise.return_response())
-
-                merged_statistic = self.merge_statistic(node_statistic)
-
-                promises.clear()
-                node_statistic.clear()
-
-                self.statistic.respond_to_task(return_address, merged_statistic)
+                self.statistic.respond_to_task(return_address, result)
 
     def merge_statistic(self, node_statistic):
-        return node_statistic.copy()
+        merged_statistic = []
+        result = {'key': ''}
+        for statistic in node_statistic:
+            merged_statistic.append(statistic['key'])
+
+        result['key'] = json.dumps({
+            'merged_statistic': merged_statistic
+        })
+        return statistic
 
     def run_task_accept_logic(self) -> NoReturn:
         while not self.stop_event.is_set():
@@ -91,7 +133,7 @@ class Balancer(ErrorHandlerContextMixin):
                 self.pending_tasks[task['taskId']] = task
                 balancer = self.algorithm_getter.get_balancer(task["dataSet"]['dataSplitter']['fileName'])
                 _, result = TaskBalancer.balance_task(task, balancer)
-                task['number_of_tasks'] = len(result)
+                task['total_number_of_tasks'] = task['number_of_tasks'] = len(result)
                 task['time_start'] = time.time()
 
                 for splitted_task in result:
