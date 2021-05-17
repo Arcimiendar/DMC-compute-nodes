@@ -9,8 +9,11 @@ class TimedDict(dict):
         self.dict = dict()
         super(TimedDict, self).__init__()
 
+    def __contains__(self, item):
+        return self.__getattribute__('__contains__')(item)
+        
     def __getattribute__(self, item):
-        if item in ('ttls', 'ttl', 'dict', '__setitem__', '__delitem__'):
+        if item in ('ttls', 'ttl', 'dict', '__setitem__', '__delitem__', 'clear'):
             return super(TimedDict, self).__getattribute__(item)
 
         now = time.time()
@@ -29,3 +32,7 @@ class TimedDict(dict):
     def __delitem__(self, key):
         self.dict.__delitem__(key)
         self.ttls.__delitem__(key)
+
+    def clear(self) -> None:
+        self.ttls.clear()
+        self.dict.clear()
