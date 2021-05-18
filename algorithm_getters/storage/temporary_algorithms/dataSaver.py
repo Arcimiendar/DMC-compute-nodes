@@ -12,5 +12,5 @@ class TempDataSaver(BaseDataSaver):
     def execute(self, ctx: Context, data: str) -> None:
         if not os.path.exists('temp'):
             os.mkdir('temp')
-        with open(os.path.join('temp', f'{data}_{settings.service_id}'), 'a') as f:
-            f.write(data)
+        with open(os.path.join('temp', f'{settings.service_id}'), 'a') as f:
+            f.write(data + ' ')

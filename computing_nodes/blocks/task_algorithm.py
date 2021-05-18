@@ -8,5 +8,5 @@ class TaskAlgorithm:
         for index, handler in enumerate(handlers):
             handler_instance = handler()
             task['current_result'] = handler_instance.execute(context, task['current_result'])
-            task['statistic']['algorithms'][f'{index}_{handler.__class__.__name__}'] = handler.statistic
+            task['statistic']['algorithms'][f'{index}_{handler.__class__.__name__}'] = handler_instance.statistic
         return context, task

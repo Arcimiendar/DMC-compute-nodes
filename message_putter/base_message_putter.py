@@ -18,7 +18,7 @@ class BaseMessagePutter(metaclass=ABCMeta):
 
     def return_response(self):
         response = self.caller.fetch_response()
-        response = self.parse_reponse(response)
+        response = self.parse_response(response)
         return response
 
     def put_task(self, task):

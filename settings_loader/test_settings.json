@@ -1,8 +1,7 @@
 {
     "web_server": {
         "url": "http://192.168.43.18:8080/",
-        "result": "api/node/create",
-        "statistic": "api/node/statistic"
+        "result": "api/node/create"
     },
     "rabbitmq": {
         "host": "rabbit",
