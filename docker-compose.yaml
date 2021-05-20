@@ -1,5 +1,4 @@
 version: "3.8"
-# use just for local development
 services:
   balancer:
     build: .
