@@ -9,4 +9,5 @@ class TaskBalancer:
         context = Context(task)
         handler_instance = handler()
         tasks = handler_instance.balance_task(context, task['dataSet']['link'])
+        task['statistic'] = {'splitter': handler_instance.statistic}
         return context, [{**task, 'current_result': splitted_task} for splitted_task in tasks]

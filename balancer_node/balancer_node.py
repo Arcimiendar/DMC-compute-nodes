@@ -13,7 +13,6 @@ from balancer_node.blocks.task_balancer import TaskBalancer
 from logs import get_logger
 from typing import NoReturn
 import threading
-import uuid
 import time
 
 
@@ -24,7 +23,7 @@ class Balancer(ErrorHandlerContextMixin):
     def __init__(self):
         super(Balancer, self).__init__()
         self.available_nodes = TimedDict(120)
-        self.pending_tasks = {}  # redo through redis
+        self.pending_tasks = {}
 
         self.pings = PingAccepter()
         self.statistic = StatisticAccepter()
@@ -75,7 +74,7 @@ class Balancer(ErrorHandlerContextMixin):
         elif statistics_request['key'] == 'available_nodes':
             nodes = []
             for node in self.available_nodes.values():
-                nodes.append(node['name'])
+                nodes.append(node['node_name'])
             result['key'] = json.dumps({'available_nodes': nodes})
         return result
 
@@ -92,6 +91,12 @@ class Balancer(ErrorHandlerContextMixin):
         for promise in promises:
             node_statistic.append(promise.return_response())
 
+        node_statistic.append(
+            self.pending_tasks.get(
+                statistics_request['taskId'], {'statistic': {'splitter': None}}
+            )['statistic']
+        )
+
         merged_statistic = self.merge_statistic(node_statistic)
 
         return merged_statistic
@@ -100,11 +105,6 @@ class Balancer(ErrorHandlerContextMixin):
         while not self.stop_event.is_set():
             with self.error_handler_context():
                 return_address, statistics_request = self.statistic.get_task()
-                statistics_request = {
-                    "key": "done_percent",
-                    "taskId": "",  # task id
-                    "system": True
-                }
                 logger.info(f'got statistic request {statistics_request}')
                 if statistics_request['system']:
                     result = self.handle_system_statistics(statistics_request)
@@ -117,19 +117,17 @@ class Balancer(ErrorHandlerContextMixin):
         merged_statistic = []
         result = {'key': ''}
         for statistic in node_statistic:
-            merged_statistic.append(statistic['key'])
-
+            merged_statistic.append(statistic)
         result['key'] = json.dumps({
             'merged_statistic': merged_statistic
         })
-        return statistic
+        return result
 
     def run_task_accept_logic(self) -> NoReturn:
         while not self.stop_event.is_set():
             with self.error_handler_context():
                 _, task = self.tasks.get_task()
                 task: dict
-                task['taskId'] = str(uuid.uuid4())  # temp, remove when Egor finish it
                 self.pending_tasks[task['taskId']] = task
                 balancer = self.algorithm_getter.get_balancer(task["dataSet"]['dataSplitter']['fileName'])
                 _, result = TaskBalancer.balance_task(task, balancer)
@@ -138,8 +136,6 @@ class Balancer(ErrorHandlerContextMixin):
 
                 for splitted_task in result:
                     self.balanced_task_putter.put_task(splitted_task)
-
-                # self.tasks.respond_to_task(None, 'task_accepted')
 
     def run_done_task_accept_logic(self):
         while not self.stop_event.is_set():

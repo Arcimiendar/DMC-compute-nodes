@@ -9,6 +9,7 @@ from algorithm_getters.algorithm_getter import AlgorithmGetter
 from computing_nodes.blocks.task_algorithm import TaskAlgorithm
 from computing_nodes.blocks.task_data_getter import TaskDataGetter
 from computing_nodes.blocks.task_data_saver import TaskDataSaver
+from utils.timed_dict import TimedDict
 
 import threading
 
@@ -36,7 +37,7 @@ class ComputingNode(ErrorHandlerContextMixin):
         main = threading.Thread(target=self.run_main_logic)
         pings = threading.Thread(target=self.run_pings)
         statistic = threading.Thread(target=self.run_statistic_logic)
-
+        self.current_statistics = TimedDict(60)
         main.start()
         pings.start()
         statistic.start()
@@ -72,14 +73,19 @@ class ComputingNode(ErrorHandlerContextMixin):
                 context, self.task = TaskAlgorithm.execute(context, self.task, algorithm)
                 context, self.task = TaskDataSaver.save_data(context, self.task, data_saver)
                 ###
+                self.current_statistics[self.task['taskId']] = self.task['statistic']
                 self.done_task.put_task(self.task)
                 self.done_task.return_response()
 
     def run_statistic_logic(self) -> NoReturn:
         while not self.stop_event.is_set():
             with self.error_handler_context():
-                statistic_request = self.statistic_accepter.get_task()
-                logger.info(f'got statistic_request {statistic_request}')
+                call_info, statistic_request = self.statistic_accepter.get_task()
+                statistic_request: dict
+                logger.info(f'got statistic_request {statistic_request} {self.current_statistics.dict}')
+                self.statistic_accepter.respond_to_task(
+                    call_info, self.current_statistics.dict.get(statistic_request['taskId'])
+                )
 
     def run_pings(self) -> NoReturn:
         self.ping.put_task(self.node_info)

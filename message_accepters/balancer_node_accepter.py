@@ -23,7 +23,7 @@ class TaskAccepter(BaseAccepter):
 class StatisticAccepter(BaseAccepter):
     FUNCTION_NAME = 'get_statistic'
     NAMESPACE = 'balancer'
-    RPC_LISTENER_CLASS = RabbitHttpFunctionListener
+    RPC_LISTENER_CLASS = RabbitRPCFunctionListener
 
     def parse_task(self, task: bytes) -> object:
         return json.loads(task)
