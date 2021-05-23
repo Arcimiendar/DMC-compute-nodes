@@ -10,13 +10,13 @@
         "password": "guest"
     },
     "error_policy": {
-        "ignore_all": false,
+        "ignore_all": true,
         "tolerance_number": 1
     },
     "algorithm_storage_backend": {
         "type": "file_system_storage",
         "config": {
-            "directory": "./algorithm_getters/storage/temporary_algorithms"
+            "directory": "./example"
         }
     },
     "logs": {

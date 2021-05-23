@@ -142,10 +142,9 @@ class Balancer(ErrorHandlerContextMixin):
             with self.error_handler_context():
                 call_info, done_task = self.done_tasks.get_task()
                 done_task: dict
+                self.done_tasks.respond_to_task(call_info, {'status': 'ok'})
                 if done_task['taskId'] in self.pending_tasks:
                     self.pending_tasks[done_task['taskId']]['number_of_tasks'] -= 1
-                    self.done_tasks.respond_to_task(call_info, {'status': 'ok'})
-
                     if self.pending_tasks[done_task['taskId']]['number_of_tasks'] == 0:
                         result = {
                             'taskId': done_task['taskId'],
