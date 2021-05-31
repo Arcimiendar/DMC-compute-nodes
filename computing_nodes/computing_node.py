@@ -61,19 +61,23 @@ class ComputingNode(ErrorHandlerContextMixin):
                 self.task = self.preprocess_task(self.task)
                 logger.info(f'got task: {self.task}')
 
-                data_getter = self.algorithm_getter.get_getter(self.task['dataSet']['dataGetter']['fileName'])
+                data_getter = self.algorithm_getter.get_getter(
+                    self.task['dataSet']['dataGetter']['fileName'], self.task['dataSet']['dataGetter'].get('file')
+                )
                 algorithm = [
-                    self.algorithm_getter.get_algorithm(step['fileName'])
+                    self.algorithm_getter.get_algorithm(step['fileName'], step.get('file'))
                     for step in self.task['algorithm']['tasks']
                 ]
 
-                data_saver = self.algorithm_getter.get_saver(self.task['dataSet']['dataSaver']['fileName'])
+                data_saver = self.algorithm_getter.get_saver(
+                    self.task['dataSet']['dataSaver']['fileName'], self.task['dataSet']['dataSaver'].get('file')
+                )
                 ###
                 context, self.task = TaskDataGetter.get_data(self.task, data_getter)
                 context, self.task = TaskAlgorithm.execute(context, self.task, algorithm)
                 context, self.task = TaskDataSaver.save_data(context, self.task, data_saver)
                 ###
-                self.current_statistics[self.task['taskId']] = self.task['statistic']
+                self.current_statistics[self.task['id']] = self.task['statistic']
                 self.done_task.put_task(self.task)
                 self.done_task.return_response()
 
@@ -84,7 +88,7 @@ class ComputingNode(ErrorHandlerContextMixin):
                 statistic_request: dict
                 logger.info(f'got statistic_request {statistic_request} {self.current_statistics.dict}')
                 self.statistic_accepter.respond_to_task(
-                    call_info, self.current_statistics.dict.get(statistic_request['taskId'])
+                    call_info, self.current_statistics.dict.get(statistic_request['id'])
                 )
 
     def run_pings(self) -> NoReturn:

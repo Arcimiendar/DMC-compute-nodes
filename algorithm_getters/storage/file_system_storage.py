@@ -37,5 +37,5 @@ class FileSystemStorage(BaseStorage):
                     return import_module(import_path)
                 except ImportError:
                     time.sleep(4)
-                    logger.info(os.system('ls'))
+                    logger.info(os.system('ls {}'.format(self.temp_dir_path)))
                     logger.info(import_path)

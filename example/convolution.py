@@ -13,5 +13,10 @@ class Convolution(BaseAlgorithm):
             [-1, 5, -1],
             [0, -1, 0]
         ])
-
-        return data[0], convolve2d(data[1], kernel)
+        if len(data[1].shape) > 2:
+            image = np.zeros((i - 2 for i in data[1].shape))
+            for i in range(data[1].shape[2]):
+                image[:, :, i] = convolve2d(data[1][:, :, i], kernel)
+        else:
+            image = convolve2d(data[1], kernel)
+        return data[0], image

@@ -11,7 +11,7 @@ class TestBalancedTask(BaseProtocolTestCase, unittest.TestCase):
 
     def generate_task(self):
         return {
-            "taskId": "asdf",
+            "id": "asdf",
             "algorithm": {
                 "tasks": [
                     {"fileName": "to_uppercase.py"},

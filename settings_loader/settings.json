@@ -1,7 +1,7 @@
 {
     "web_server": {
-        "url": "http://192.168.43.18:8080/",
-        "result": "api/node/create"
+        "url": "http://192.168.0.129:8080/",
+        "result": "api/answers"
     },
     "rabbitmq": {
         "host": "rabbit",
@@ -14,7 +14,7 @@
         "tolerance_number": 1
     },
     "algorithm_storage_backend": {
-        "type": "file_system_storage",
+        "type": "base64_task_storage",
         "config": {
             "directory": "./example"
         }

@@ -60,7 +60,7 @@ class Balancer(ErrorHandlerContextMixin):
     def handle_system_statistics(self, statistics_request):
         result = {"key": ""}
         if statistics_request['key'] == "done_percent":
-            task_id = statistics_request['taskId']
+            task_id = statistics_request['id']
             pending_task = self.pending_tasks.get(task_id, {'total_number_of_tasks': 0, 'number_of_tasks': 0})
             total_number_of_tasks = pending_task["total_number_of_tasks"]
             number_of_tasks = pending_task["number_of_tasks"]
@@ -93,7 +93,7 @@ class Balancer(ErrorHandlerContextMixin):
 
         node_statistic.append(
             self.pending_tasks.get(
-                statistics_request['taskId'], {'statistic': {'splitter': None}}
+                statistics_request['id'], {'statistic': {'splitter': None}}
             )['statistic']
         )
 
@@ -128,8 +128,10 @@ class Balancer(ErrorHandlerContextMixin):
             with self.error_handler_context():
                 _, task = self.tasks.get_task()
                 task: dict
-                self.pending_tasks[task['taskId']] = task
-                balancer = self.algorithm_getter.get_balancer(task["dataSet"]['dataSplitter']['fileName'])
+                self.pending_tasks[task['id']] = task
+                balancer = self.algorithm_getter.get_balancer(
+                    task["dataSet"]['dataSplitter']['fileName'], task["dataSet"]['dataSplitter'].get('file')
+                )
                 _, result = TaskBalancer.balance_task(task, balancer)
                 task['total_number_of_tasks'] = task['number_of_tasks'] = len(result)
                 task['time_start'] = time.time()
@@ -143,16 +145,16 @@ class Balancer(ErrorHandlerContextMixin):
                 call_info, done_task = self.done_tasks.get_task()
                 done_task: dict
                 self.done_tasks.respond_to_task(call_info, {'status': 'ok'})
-                if done_task['taskId'] in self.pending_tasks:
-                    self.pending_tasks[done_task['taskId']]['number_of_tasks'] -= 1
-                    if self.pending_tasks[done_task['taskId']]['number_of_tasks'] == 0:
+                if done_task['id'] in self.pending_tasks:
+                    self.pending_tasks[done_task['id']]['number_of_tasks'] -= 1
+                    if self.pending_tasks[done_task['id']]['number_of_tasks'] == 0:
                         result = {
-                            'taskId': done_task['taskId'],
+                            'id': done_task['id'],
                             'status': 'ok',
-                            'timeSpent': str(time.time() - self.pending_tasks[done_task['taskId']]['time_start']),
+                            'timeSpent': str(time.time() - self.pending_tasks[done_task['id']]['time_start']),
                             'message': 'ok'
                         }
                         logger.info(f'result = {result}')
-                        self.pending_tasks.pop(done_task['taskId'])
+                        self.pending_tasks.pop(done_task['id'])
 
                         self.tasks.respond_to_task(None, result)

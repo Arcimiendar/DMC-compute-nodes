@@ -5,14 +5,14 @@ services:
     links:
       - rabbit
     volumes:
-    - ./:/project
+    - ./temp:/project/temp
     command: "python3 main_balancer.py"
   computing:
     build: .
     links:
       - rabbit
     volumes:
-    - ./:/project
+    - ./temp:/project/temp
     command: "python3 main_computing.py"
   rabbit:
     image: "rabbitmq:3-management"
