@@ -14,7 +14,7 @@
         "tolerance_number": 1
     },
     "algorithm_storage_backend": {
-        "type": "base64_task_storage",
+        "type": "file_system_storage",
         "config": {
             "directory": "./example"
         }
