@@ -7,7 +7,8 @@ class TaskDataSaver:
     @classmethod
     def save_data(cls, context: Context, task: dict, handler: Type[BaseDataSaver]) -> Tuple[Context, dict]:
         handler_instance = handler()
-        handler_instance.save_data(context, task['current_result'])
+        result = handler_instance.save_data(context, task['current_result'])
         task.pop('current_result')
         task['statistic']['saver'] = handler_instance.statistic
+        task['result'] = result
         return context, task

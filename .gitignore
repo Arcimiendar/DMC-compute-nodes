@@ -4,3 +4,5 @@
 venv/
 temp/
 tmp*/
+oci.conf
+*.pem

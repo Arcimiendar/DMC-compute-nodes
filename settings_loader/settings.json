@@ -14,10 +14,11 @@
         "tolerance_number": 1
     },
     "algorithm_storage_backend": {
-        "type": "file_system_storage",
+        "type": "oci_storage",
         "config": {
-            "directory": "./example"
-        }
+			"bucket": "dmc",
+            "namespace": "frfnb2xtpqjv"
+		}
     },
     "logs": {
         "version": 1,

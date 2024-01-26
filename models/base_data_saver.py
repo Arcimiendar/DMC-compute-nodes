@@ -24,3 +24,5 @@ class BaseDataSaver(BaseAlgorithm, metaclass=ABCMeta):
         self.statistic['end_time'] = end_time
         self.statistic['spent_time'] = end_time - start_time
         self.statistic['result'] = result
+
+        return result

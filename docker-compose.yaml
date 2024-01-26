@@ -14,6 +14,15 @@ services:
     volumes:
     - ./temp:/project/temp
     command: "python3 main_computing.py"
+  server:
+    build: .
+    links:
+      - rabbit
+    volumes:
+      - ./temp:/project/temp
+    command: "python3 main_server.py"
+    ports:
+      - "8000:8000"
   rabbit:
     image: "rabbitmq:3-management"
     ports:

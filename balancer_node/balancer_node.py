@@ -24,6 +24,7 @@ class Balancer(ErrorHandlerContextMixin):
         super(Balancer, self).__init__()
         self.available_nodes = TimedDict(120)
         self.pending_tasks = {}
+        self.call_infos = {}
 
         self.pings = PingAccepter()
         self.statistic = StatisticAccepter()
@@ -126,9 +127,11 @@ class Balancer(ErrorHandlerContextMixin):
     def run_task_accept_logic(self) -> NoReturn:
         while not self.stop_event.is_set():
             with self.error_handler_context():
-                _, task = self.tasks.get_task()
+                call_info, task = self.tasks.get_task()
                 task: dict
+                self.call_infos[task['id']] = call_info
                 self.pending_tasks[task['id']] = task
+                self.pending_tasks[task['id']]['accumulator'] = []
                 balancer = self.algorithm_getter.get_balancer(
                     task["dataSet"]['dataSplitter']['fileName'], task["dataSet"]['dataSplitter'].get('file')
                 )
@@ -147,14 +150,17 @@ class Balancer(ErrorHandlerContextMixin):
                 self.done_tasks.respond_to_task(call_info, {'status': 'ok'})
                 if done_task['id'] in self.pending_tasks:
                     self.pending_tasks[done_task['id']]['number_of_tasks'] -= 1
+                    self.pending_tasks[done_task['id']]['accumulator'].append(done_task['result'])
                     if self.pending_tasks[done_task['id']]['number_of_tasks'] == 0:
                         result = {
                             'id': done_task['id'],
                             'status': 'ok',
                             'timeSpent': str(time.time() - self.pending_tasks[done_task['id']]['time_start']),
-                            'message': 'ok'
+                            'message': 'ok',
+                            'data': self.pending_tasks[done_task['id']]['accumulator'],
                         }
                         logger.info(f'result = {result}')
                         self.pending_tasks.pop(done_task['id'])
-
-                        self.tasks.respond_to_task(None, result)
+                        call_info = self.call_infos[done_task['id']]
+                        self.call_infos.pop(done_task['id'])
+                        self.tasks.respond_to_task(call_info, result)

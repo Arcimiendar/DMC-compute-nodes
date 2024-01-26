@@ -23,7 +23,7 @@ class BaseMessagePutter(metaclass=ABCMeta):
 
     def put_task(self, task):
         raw_task = self.incapsulate_task(task)
-        self.caller.call(raw_task)
+        return self.caller.call(raw_task)
 
     @abstractmethod
     def incapsulate_task(self, task: object) -> bytes:
