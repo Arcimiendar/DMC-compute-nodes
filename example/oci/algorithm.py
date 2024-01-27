@@ -1,8 +1,8 @@
 from models.base_algorithm import BaseAlgorithm, Context
 
 
-class_name = 'StableDiffusion'
+class_name = 'Upper'
 
-class StableDiffusion(BaseAlgorithm):
-    def execute(self, ctx: Context, data: object) -> object:
-        return 'asdf'
+class Upper(BaseAlgorithm):
+    def execute(self, ctx: Context, data: str) -> object:
+        return data.upper()

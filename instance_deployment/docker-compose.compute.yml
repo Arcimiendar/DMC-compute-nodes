@@ -1,0 +1,5 @@
+version: "3.8"
+services:
+  computing:
+    image: "fra.ocir.io/frfnb2xtpqjv/dmc:latest"
+    command: "python3 main_computing.py"

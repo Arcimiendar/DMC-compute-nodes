@@ -11,6 +11,11 @@ class TaskParam(BaseModel):
     text: str
 
 
+@app.get('/')
+def ping():
+    return 'ok'
+
+
 @app.post('/task')
 def task(param: TaskParam):
     task_id = str(uuid.uuid4())

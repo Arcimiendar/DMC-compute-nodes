@@ -1,0 +1,7 @@
+version: "3.8"
+services:
+  server:
+    image: "fra.ocir.io/frfnb2xtpqjv/dmc:latest"
+    command: "python3 main_server.py"
+    ports:
+      - "8000:8000"
