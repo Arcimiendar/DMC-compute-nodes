@@ -1,0 +1,48 @@
+{
+    "web_server": {
+        "url": "http://192.168.0.129:8080/",
+        "result": "api/answers"
+    },
+    "rabbitmq": {
+        "host": "10.0.2.2",
+        "port": "5672",
+        "user": "guest",
+        "password": "guest"
+    },
+    "error_policy": {
+        "ignore_all": true,
+        "tolerance_number": 1
+    },
+    "algorithm_storage_backend": {
+        "type": "oci_storage",
+        "config": {
+			"bucket": "dmc",
+            "namespace": "frfnb2xtpqjv"
+		}
+    },
+    "logs": {
+        "version": 1,
+        "propagate": true,
+        "formatters": {
+            "default": {
+                "format": "%(asctime)s.%(msecs)05d %(levelname)s: %(message)s",
+                "datefmt": "%m/%d/%Y %H:%M:%S"
+            }
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": "DEBUG",
+                "formatter": "default",
+                "stream": "ext://sys.stdout"
+            }
+        },
+        "loggers": {
+
+        },
+        "root": {
+            "level": "DEBUG",
+            "handlers": ["console"]
+        }
+    }
+}
