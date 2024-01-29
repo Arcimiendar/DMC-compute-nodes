@@ -5,7 +5,7 @@ from importlib import import_module, invalidate_caches
 import os
 import contextlib
 import pathlib
-import shutil
+import secrets
 
 from logs import get_logger
 from settings_loader import SettingsLoader
@@ -31,11 +31,12 @@ class OCIStorage(BaseStorage):
         conf = oci.config.from_file('/project/oci.conf')
         client = oci.object_storage.ObjectStorageClient(config=conf)
         object = client.get_object(namespace, bucket, filename)
+        module_name, _ = os.path.splitext(filename)
+        module_name += '_' + secrets.token_urlsafe(7)
 
-        with open(os.path.join(self.temp_dir_path, filename), 'w') as f:
+        with open(os.path.join(self.temp_dir_path, module_name + '.py'), 'w') as f:
             f.write(object.data.text)
 
-        module_name, _ = os.path.splitext(filename)
         import_path = f'tmp{"".join(settings.service_id.split("-"))}.{module_name}'
 
         while True:
